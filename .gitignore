@@ -1,0 +1,67 @@
+
+# ==========================================
+# TESIS - CONSISTENCIA ESTRUCTURAL IA
+# LLM Consistency Toolkit (LCT 1.2)
+# ==========================================
+
+# Python: cache y archivos compilados
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Archivos temporales y registros
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.pyc
+~$*
+*.asv
+
+# Configuraciones locales y secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+credentials.json
+
+# Editores y sistemas operativos
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos temporales de Jupyter
+.ipynb_checkpoints/
+
+# Directorios de compilacion
+build/
+dist/
+*.egg-info/
+
+# Archivos temporales de Office
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Los documentos academicos y datos
+# experimentales NO se excluyen.
+# Se conservaran los archivos:
+# .docx, .pdf, .xlsx, .csv y .md
