@@ -18,12 +18,7 @@ Repositorio complementario de la tesis UVG. Esta estructura distingue los datos 
 
 **Incluidos en este paquete:** una copia de la tesis revisada y dos rubricas editables de LCT 1.2.
 
-**Pendientes de incorporar desde tus archivos originales:** matrices experimentales, respuestas, entradas, codigo de LCT, bancos historicos, analisis y protocolo. Las carpetas con `LEEME.md` no prueban por si solas que esos materiales esten disponibles.
-
 ## Reproducibilidad y limites
 
 Las pruebas historicas documentan desarrollo y calibracion operativa, pero no constituyen automaticamente una validacion independiente de confiabilidad. No reconstruir valores historicos individuales del IEE ni registros de correcciones humanas como si fueran mediciones originales.
 
-## Antes de publicar
-
-Verificar archivos y rutas del Anexo F, eliminar datos sensibles y credenciales, documentar la version o commit del experimento, y comprobar que el contenido realmente este disponible para los evaluadores.
