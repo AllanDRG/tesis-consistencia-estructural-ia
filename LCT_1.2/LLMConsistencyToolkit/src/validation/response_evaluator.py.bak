@@ -1,0 +1,166 @@
+import json
+from dataclasses import dataclass
+from src.llm.local_llm import LocalLLM
+
+
+@dataclass
+class ResponseScore:
+    definicion_conceptual: int
+    relacion_causal: int
+    ejemplificacion: int
+    aplicacion: int
+    justificacion: str
+
+    @property
+    def total(self) -> int:
+        return (
+            self.definicion_conceptual
+            + self.relacion_causal
+            + self.ejemplificacion
+            + self.aplicacion
+        )
+
+    @property
+    def ipe(self) -> float:
+        return (self.total / 16) * 100
+
+
+@dataclass
+class ComparisonResult:
+    respuesta_a: ResponseScore
+    respuesta_b: ResponseScore
+
+    @property
+    def delta_ipe(self) -> float:
+        return self.respuesta_a.ipe - self.respuesta_b.ipe
+
+    @property
+    def diferencia_absoluta(self) -> float:
+        return abs(self.delta_ipe)
+
+
+class ResponseEvaluator:
+
+    def __init__(self):
+        self.llm = LocalLLM()
+
+    def _evaluate_single(
+        self,
+        entrada: str,
+        respuesta: str
+    ) -> ResponseScore:
+
+        instruction = f"""
+Evalúa la profundidad explicativa de una respuesta académica.
+
+ENTRADA ORIGINAL:
+{entrada}
+
+RESPUESTA:
+{respuesta}
+
+Evalúa independientemente las siguientes dimensiones
+utilizando números enteros de 0 a 4.
+
+1. definicion_conceptual
+0 = ausente
+1 = mínima o imprecisa
+2 = básica
+3 = adecuada y clara
+4 = amplia, precisa y bien integrada
+
+2. relacion_causal
+0 = ausente
+1 = relación superficial
+2 = relación básica
+3 = explicación causal adecuada
+4 = relaciones causales profundas y bien desarrolladas
+
+3. ejemplificacion
+0 = sin ejemplos
+1 = ejemplo débil o poco pertinente
+2 = ejemplo básico
+3 = ejemplo claro y pertinente
+4 = ejemplos muy pertinentes e integrados en la explicación
+
+4. aplicacion
+0 = sin aplicación
+1 = aplicación mínima
+2 = aplicación básica
+3 = aplicación clara
+4 = aplicación desarrollada y contextualizada
+
+IMPORTANTE:
+
+Evalúa únicamente la respuesta proporcionada.
+
+No compares esta respuesta con ninguna respuesta anterior.
+
+No penalices la ausencia de un elemento cuando la naturaleza
+de la pregunta haga que dicho elemento no sea razonablemente
+necesario. En ese caso, explica esta circunstancia en la
+justificación.
+
+La evaluación es auxiliar. La puntuación oficial corresponde
+al investigador.
+
+Devuelve EXCLUSIVAMENTE JSON válido:
+
+{{
+  "definicion_conceptual": 0,
+  "relacion_causal": 0,
+  "ejemplificacion": 0,
+  "aplicacion": 0,
+  "justificacion": "explicación breve de la evaluación"
+}}
+"""
+
+        raw = self.llm.chat(instruction)
+
+        raw = raw.strip()
+        raw = raw.replace("```json", "")
+        raw = raw.replace("```", "")
+        raw = raw.strip()
+
+        data = json.loads(raw)
+
+        campos = [
+            "definicion_conceptual",
+            "relacion_causal",
+            "ejemplificacion",
+            "aplicacion",
+        ]
+
+        for campo in campos:
+            valor = data[campo]
+
+            if not isinstance(valor, int) or not 0 <= valor <= 4:
+                raise ValueError(
+                    f"{campo} debe ser un entero entre 0 y 4."
+                )
+
+        return ResponseScore(**data)
+
+    def compare(
+        self,
+        entrada_a: str,
+        respuesta_a: str,
+        entrada_b: str,
+        respuesta_b: str
+    ) -> ComparisonResult:
+
+        # Dos llamadas completamente independientes.
+        score_a = self._evaluate_single(
+            entrada_a,
+            respuesta_a
+        )
+
+        score_b = self._evaluate_single(
+            entrada_b,
+            respuesta_b
+        )
+
+        return ComparisonResult(
+            respuesta_a=score_a,
+            respuesta_b=score_b
+        )

@@ -1,0 +1,344 @@
+import streamlit as st
+
+from src.validation.prompt_validator import PromptValidator
+from src.validation.response_evaluator import ResponseEvaluator
+
+
+st.set_page_config(
+    page_title="LLM Consistency Toolkit",
+    page_icon="🧪",
+    layout="wide",
+)
+
+st.title("LLM Consistency Toolkit")
+st.caption("Prototype v0.2 · Experimental Analysis Toolkit")
+
+st.info(
+    "El modelo local funciona como asistente de análisis. "
+    "Las decisiones metodológicas finales corresponden al investigador."
+)
+
+
+tab_entradas, tab_respuestas = st.tabs(
+    [
+        "Validar entradas · IEE",
+        "Analizar respuestas · IPE",
+    ]
+)
+
+
+# =========================================================
+# TAB 1 - VALIDACIÓN DE ENTRADAS
+# =========================================================
+
+with tab_entradas:
+
+    st.header("Validación de entradas conceptualmente equivalentes")
+
+    st.write(
+        "El Índice de Equivalencia de Entrada (IEE) permite realizar "
+        "una evaluación preliminar de la equivalencia entre dos "
+        "formulaciones académicas."
+    )
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        prompt_a = st.text_area(
+            "Entrada A",
+            height=180,
+            key="prompt_a",
+            placeholder="Ingrese la primera entrada académica...",
+        )
+
+    with col_b:
+        prompt_b = st.text_area(
+            "Entrada B",
+            height=180,
+            key="prompt_b",
+            placeholder="Ingrese la reformulación...",
+        )
+
+    if st.button(
+        "Analizar equivalencia",
+        type="primary",
+        use_container_width=True,
+        key="analizar_iee",
+    ):
+
+        if not prompt_a.strip() or not prompt_b.strip():
+            st.error("Debe ingresar ambas entradas.")
+
+        else:
+
+            try:
+
+                with st.spinner(
+                    "Qwen3 8B está evaluando la equivalencia..."
+                ):
+
+                    validator = PromptValidator()
+
+                    resultado = validator.validate(
+                        prompt_a.strip(),
+                        prompt_b.strip(),
+                    )
+
+                st.divider()
+
+                st.subheader("Resultado del análisis")
+
+                m1, m2, m3, m4, m5 = st.columns(5)
+
+                m1.metric(
+                    "Semántica",
+                    f"{resultado.equivalencia_semantica}/4",
+                )
+
+                m2.metric(
+                    "Objetivo",
+                    f"{resultado.equivalencia_objetivo}/4",
+                )
+
+                m3.metric(
+                    "Nivel cognitivo",
+                    f"{resultado.equivalencia_cognitiva}/4",
+                )
+
+                m4.metric(
+                    "Alcance",
+                    f"{resultado.equivalencia_alcance}/4",
+                )
+
+                m5.metric(
+                    "Neutralidad",
+                    f"{resultado.neutralidad_reformulacion}/4",
+                )
+
+                st.subheader("Índice de Equivalencia de Entrada")
+
+                st.progress(resultado.iee / 100)
+
+                st.metric(
+                    "IEE",
+                    f"{resultado.iee:.2f}/100",
+                )
+
+                if resultado.iee >= 90:
+                    st.success("ALTA EQUIVALENCIA")
+
+                elif resultado.iee >= 75:
+                    st.warning("REVISIÓN RECOMENDADA")
+
+                else:
+                    st.error("NO APTO")
+
+                st.subheader("Justificación")
+
+                st.write(resultado.justificacion)
+
+                st.caption(
+                    "El IEE constituye una evaluación auxiliar. "
+                    "La aceptación definitiva del par corresponde "
+                    "al investigador."
+                )
+
+            except Exception as error:
+
+                st.error(
+                    "No fue posible completar el análisis de entradas."
+                )
+
+                st.exception(error)
+
+
+# =========================================================
+# TAB 2 - ANÁLISIS DE RESPUESTAS
+# =========================================================
+
+with tab_respuestas:
+
+    st.header("Análisis de profundidad explicativa")
+
+    st.write(
+        "Cada respuesta es evaluada de manera independiente. "
+        "El Índice de Profundidad Explicativa (IPE) resume "
+        "cuantitativamente el desarrollo explicativo observado."
+    )
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+
+        st.subheader("Caso A")
+
+        entrada_a = st.text_area(
+            "Entrada original A",
+            height=100,
+            key="entrada_respuesta_a",
+            placeholder="Pregunta que originó la respuesta A...",
+        )
+
+        respuesta_a = st.text_area(
+            "Respuesta A",
+            height=260,
+            key="respuesta_a",
+            placeholder="Pegue aquí la respuesta obtenida...",
+        )
+
+    with col_b:
+
+        st.subheader("Caso B")
+
+        entrada_b = st.text_area(
+            "Entrada original B",
+            height=100,
+            key="entrada_respuesta_b",
+            placeholder="Pregunta que originó la respuesta B...",
+        )
+
+        respuesta_b = st.text_area(
+            "Respuesta B",
+            height=260,
+            key="respuesta_b",
+            placeholder="Pegue aquí la respuesta obtenida...",
+        )
+
+    if st.button(
+        "Analizar respuestas",
+        type="primary",
+        use_container_width=True,
+        key="analizar_ipe",
+    ):
+
+        campos = [
+            entrada_a,
+            respuesta_a,
+            entrada_b,
+            respuesta_b,
+        ]
+
+        if not all(campo.strip() for campo in campos):
+
+            st.error(
+                "Debe completar ambas entradas y ambas respuestas."
+            )
+
+        else:
+
+            try:
+
+                with st.spinner(
+                    "Evaluando las respuestas de forma independiente..."
+                ):
+
+                    evaluator = ResponseEvaluator()
+
+                    comparacion = evaluator.compare(
+                        entrada_a.strip(),
+                        respuesta_a.strip(),
+                        entrada_b.strip(),
+                        respuesta_b.strip(),
+                    )
+
+                score_a = comparacion.respuesta_a
+                score_b = comparacion.respuesta_b
+
+                st.divider()
+
+                st.header("Resultados de profundidad explicativa")
+
+                st.subheader("Comparación por dimensión")
+
+                c0, c1, c2 = st.columns([2, 1, 1])
+
+                c0.markdown("**Dimensión**")
+                c1.markdown("**Respuesta A**")
+                c2.markdown("**Respuesta B**")
+
+                dimensiones = [
+                    (
+                        "Definición conceptual",
+                        score_a.definicion_conceptual,
+                        score_b.definicion_conceptual,
+                    ),
+                    (
+                        "Relación causal",
+                        score_a.relacion_causal,
+                        score_b.relacion_causal,
+                    ),
+                    (
+                        "Ejemplificación",
+                        score_a.ejemplificacion,
+                        score_b.ejemplificacion,
+                    ),
+                    (
+                        "Aplicación",
+                        score_a.aplicacion,
+                        score_b.aplicacion,
+                    ),
+                ]
+
+                for nombre, valor_a, valor_b in dimensiones:
+
+                    c0, c1, c2 = st.columns([2, 1, 1])
+
+                    c0.write(nombre)
+                    c1.write(f"{valor_a}/4")
+                    c2.write(f"{valor_b}/4")
+
+                st.divider()
+
+                ipe_a_col, ipe_b_col, delta_col = st.columns(3)
+
+                ipe_a_col.metric(
+                    "IPE · Respuesta A",
+                    f"{score_a.ipe:.2f}/100",
+                )
+
+                ipe_b_col.metric(
+                    "IPE · Respuesta B",
+                    f"{score_b.ipe:.2f}/100",
+                )
+
+                delta_col.metric(
+                    "ΔIPE",
+                    f"{comparacion.delta_ipe:+.2f}",
+                )
+
+                st.subheader("Diferencia absoluta")
+
+                st.metric(
+                    "|ΔIPE|",
+                    f"{comparacion.diferencia_absoluta:.2f}",
+                )
+
+                st.divider()
+
+                just_a, just_b = st.columns(2)
+
+                with just_a:
+
+                    st.subheader("Justificación · Respuesta A")
+                    st.write(score_a.justificacion)
+
+                with just_b:
+
+                    st.subheader("Justificación · Respuesta B")
+                    st.write(score_b.justificacion)
+
+                st.caption(
+                    "Las puntuaciones generadas por el modelo local "
+                    "son auxiliares y deberán ser revisadas por el "
+                    "investigador antes de utilizarse como datos "
+                    "oficiales."
+                )
+
+            except Exception as error:
+
+                st.error(
+                    "No fue posible completar el análisis "
+                    "de las respuestas."
+                )
+
+                st.exception(error)
